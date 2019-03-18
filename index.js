@@ -7,7 +7,7 @@ const request = require('request-promise');
 const express = require('express');
 const app = express();
 
-const {PORT, TELEGRAM_BOT_TOKEN, HOST_DOMAIN, GOOGLE_VISION_API_KEY, IMAGES_FOLDER} = process.env;
+const {PORT, TELEGRAM_BOT_TOKEN, HOST_DOMAIN, GOOGLE_VISION_API_KEY, IMAGES_FOLDER, CLARIFAI_API_KEY} = process.env;
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: true});
 
@@ -51,6 +51,7 @@ bot.on('message', async (msg) => {
         console.log('Message sent.');
         console.log('====================Finished====================');
       } catch (e) {
+        console.log(e);
         bot.sendMessage(chatId, 'I lost the image somewhere in the closet, can you send it again?');
       }
     });
@@ -68,20 +69,41 @@ function getHashTags(imageURL) {
   return new Promise(async (resolve, reject) => {
     let response;
     try {
+      // const options = {
+      //   method: 'POST',
+      //   url: 'https://vision.googleapis.com/v1/images:annotate',
+      //   qs: {key: GOOGLE_VISION_API_KEY},
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: {
+      //     requests: [
+      //       {
+      //         features: [{type: 'LABEL_DETECTION'}],
+      //         image: {
+      //           source: {
+      //             imageUri: imageURL,
+      //           },
+      //         },
+      //       },
+      //     ],
+      //   },
+      //   json: true,
+      // };
+
       const options = {
         method: 'POST',
-        url: 'https://vision.googleapis.com/v1/images:annotate',
-        qs: {key: GOOGLE_VISION_API_KEY},
+        url: 'https://api.clarifai.com/v2/models/aaa03c23b3724a16a56b629203edc62c/versions/aa7f35c01e0642fda5cf400f543e7c40/outputs',
         headers: {
+          'Authorization': `Key ${CLARIFAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: {
-          requests: [
+          inputs: [
             {
-              features: [{type: 'LABEL_DETECTION'}],
-              image: {
-                source: {
-                  imageUri: imageURL,
+              data: {
+                image: {
+                  url: imageURL,
                 },
               },
             },
@@ -94,7 +116,8 @@ function getHashTags(imageURL) {
       // console.log(JSON.stringify(options, null, 2));
       // console.log(JSON.stringify(response, null, 2));
 
-      const hashTags = response.responses[0].labelAnnotations.map((a) => `#${a.description.replace(/\s/gi, '')}`);
+      // const hashTags = response.responses[0].labelAnnotations.map((a) => `#${a.description.replace(/\s/gi, '')}`);
+      const hashTags = response.outputs[0].data.concepts.map((a) => `#${a.name.replace(/\s/gi, '')}`);
 
       return resolve(hashTags);
     } catch (e) {
