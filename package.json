@@ -12,6 +12,7 @@
   "dependencies": {
     "clarifai": "^2.9.0",
     "fetch-base64": "^2.1.2",
+    "request": "^2.88.0",
     "request-promise": "^4.2.4"
   },
   "devDependencies": {
