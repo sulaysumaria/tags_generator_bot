@@ -1,0 +1,22 @@
+service: tagme
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: ap-south-1
+  stage: dev
+  environment:
+    TELEGRAM_BOT_TOKEN: ${file(./config.js):getEnvVars.${self:provider.stage}.TELEGRAM_BOT_TOKEN}
+    CLARAFAI_API_KEY: ${file(./config.js):getEnvVars.${self:provider.stage}.CLARAFAI_API_KEY}
+
+functions:
+  tagMe:
+    handler: handler.tagMe
+    events:
+      - http:
+          path: /
+          method: POST
+          cors: true
+
+plugins:
+  - serverless-offline
